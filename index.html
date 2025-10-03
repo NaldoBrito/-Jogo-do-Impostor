@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo do Impostor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: linear-gradient(to right, #1e293b, #0f172a); color: white; }
+    .fade { transition: opacity 0.5s ease, transform 0.5s ease; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+  <div id="app" class="w-full max-w-xl p-6 text-center">
+    
+    <!-- Tela de configuração -->
+    <div id="setupScreen" class="fade">
+      <h1 class="text-3xl font-bold mb-6">🎭 Jogo do Impostor</h1>
+
+      <input id="playerName" type="text" placeholder="Nome do jogador" 
+             class="p-2 rounded text-black w-2/3 mb-4">
+      <button onclick="addPlayer()" 
+              class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">Adicionar Jogador</button>
+      <ul id="playersList" class="mt-4 text-left"></ul>
+
+      <div class="mt-6">
+        <label for="roundTime" class="block mb-2">⏱️ Defina o tempo da rodada (segundos)</label>
+        <input id="roundTime" type="number" value="60" min="15" max="600" 
+               class="p-2 rounded text-black w-32 text-center">
+      </div>
+
+      <button onclick="startGame()" 
+              class="mt-6 bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg">Iniciar Jogo</button>
+    </div>
+
+    <!-- Tela de palavra -->
+    <div id="wordScreen" class="fade hidden">
+      <h2 class="text-2xl font-bold mb-4">👀 Jogador: <span id="currentPlayer"></span></h2>
+      
+      <div id="hiddenWordSection">
+        <p class="mb-4">Toque abaixo para ver sua palavra</p>
+        <button id="toggleWordBtn" onclick="toggleWord()" 
+                class="bg-yellow-500 hover:bg-yellow-600 px-6 py-3 rounded-lg">Ver Palavra</button>
+      </div>
+
+      <div id="revealedWordSection" class="hidden">
+        <p id="wordHint" class="text-xl mb-2"></p>
+        <p id="wordText" class="text-2xl font-bold mb-6"></p>
+      </div>
+
+      <button id="nextPlayerBtn" onclick="nextPlayer()" 
+              class="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg hidden">Próximo Jogador</button>
+    </div>
+
+    <!-- Tela de jogo -->
+    <div id="gameScreen" class="fade hidden">
+      <h2 class="text-2xl font-bold mb-4">⏳ Rodada em andamento...</h2>
+      <div class="flex justify-center items-center mb-6">
+        <svg id="progressCircle" width="160" height="160">
+          <circle id="circle" cx="80" cy="80" r="70" 
+                  stroke="green" stroke-width="12" fill="none" 
+                  stroke-dasharray="440" stroke-dashoffset="0"
+                  transform="rotate(-90 80 80)" />
+        </svg>
+      </div>
+      <p id="timerText" class="text-3xl font-bold"></p>
+    </div>
+
+    <!-- Tela de votação -->
+    <div id="votingScreen" class="fade hidden">
+      <h2 class="text-2xl font-bold mb-6">🗳️ Votação</h2>
+      <div id="voteOptions" class="flex flex-col gap-4"></div>
+    </div>
+
+    <!-- Tela de resultado -->
+    <div id="resultScreen" class="fade hidden">
+      <h2 id="resultTitle" class="text-3xl font-bold mb-4"></h2>
+      <p id="resultMessage" class="text-xl mb-2"></p>
+      <p>A palavra era: <span id="revealWord" class="font-bold"></span></p>
+      <button onclick="resetGame()" 
+              class="mt-6 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg">Jogar Novamente</button>
+    </div>
+  </div>
+
+<script>
+// =============================
+// LISTA DE PALAVRAS (resumida)
+// =============================
+const wordList = [
+  {word:"Manga", hint:"Amarela doce"},
+  {word:"Banana", hint:"Amarela curva"},
+  {word:"Morango", hint:"Vermelha pequena"},
+  {word:"Abacaxi", hint:"Tropical espinhoso"},
+  {word:"Uva", hint:"Cacho roxo"},
+  {word:"Pera", hint:"Verde suave"},
+  {word:"Maçã", hint:"Vermelha crocante"},
+  {word:"Melancia", hint:"Grande refrescante"},
+  {word:"Caju", hint:"Castanha fruta"},
+  {word:"Kiwi", hint:"Marrom ácido"},
+  {word:"Jabuticaba", hint:"Preta doce"},
+  {word:"Acerola", hint:"Vermelha azeda"},
+  {word:"Pitanga", hint:"Pequena ácida"},
+  {word:"Framboesa", hint:"Vermelha silvestre"},
+  {word:"Amora", hint:"Preta doce"},
+  {word:"Tangerina", hint:"Cítrica fácil"},
+  {word:"Laranja", hint:"Cítrica suco"},
+  {word:"Limão", hint:"Cítrico azedo"},
+  {word:"Carambola", hint:"Forma estrela"},
+  {word:"Mamão", hint:"Laranja sementes"},
+  {word:"Pêssego", hint:"Pele aveludada"},
+  {word:"Figo", hint:"Roxo doce"},
+  {word:"Cereja", hint:"Vermelha pequena"},
+  {word:"Graviola", hint:"Grande branca"},
+  {word:"Maracujá", hint:"Amarelo azedo"},
+  {word:"Guaraná", hint:"Semente energia"},
+  {word:"Buriti", hint:"Palmeira fruta"},
+  {word:"Sapoti", hint:"Doce marrom"},
+  {word:"Tamarindo", hint:"Doce ácido"},
+  {word:"Romã", hint:"Vermelha sementes"},
+  {word:"Melão", hint:"Amarelo fresco"},
+  {word:"Seriguela", hint:"Pequena nordeste"},
+  {word:"Cupuaçu", hint:"Doce amazônia"},
+  {word:"Jenipapo", hint:"Fruto nordeste"},
+  {word:"Pitaya", hint:"Dragão rosa"},
+  {word:"Ameixa", hint:"Roxa pequena"},
+  {word:"Jaca", hint:"Grande pegajosa"},
+  {word:"Cabeludinha", hint:"Fruta peluda"},
+  {word:"Araticum", hint:"Doce cerrado"},
+  {word:"Umbu", hint:"Nordeste verde"},
+  {word:"Pinha", hint:"Doce branca"},
+  {word:"Murici", hint:"Pequeno amarelo"},
+  {word:"Pequi", hint:"Arroz Goiás"},
+  {word:"Cambuci", hint:"Azeda paulista"},
+  {word:"Cacau", hint:"Chocolate fruta"},
+  {word:"Guabiroba", hint:"Doce cerrado"},
+  {word:"Ingá", hint:"Doce vagem"},
+  {word:"Cupu", hint:"Fruto norte"},
+  {word:"Bacaba", hint:"Amazônia vinho"},
+  {word:"Butiá", hint:"Pequeno gaúcho"},
+  {word:"Leão", hint:"Rei selva"},
+  {word:"Elefante", hint:"Grande tromba"},
+  {word:"Cavalo", hint:"Corre rápido"},
+  {word:"Tigre", hint:"Listras feroz"},
+  {word:"Jacaré", hint:"Água dentes"},
+  {word:"Girafa", hint:"Pescoço longo"},
+  {word:"Baleia", hint:"Gigante oceano"},
+  {word:"Golfinho", hint:"Inteligente mar"},
+  {word:"Cachorro", hint:"Melhor amigo"},
+  {word:"Gato", hint:"Fofinho doméstico"},
+  {word:"Papagaio", hint:"Fala cores"},
+  {word:"Arara", hint:"Tropical azul"},
+  {word:"Macaco", hint:"Ágil árvores"},
+  {word:"Urso", hint:"Grande peludo"},
+  {word:"Rinoceronte", hint:"Chifre pesado"},
+  {word:"Hipopótamo", hint:"Água pesado"},
+  {word:"Camelo", hint:"Deserto corcunda"},
+  {word:"Lobo", hint:"Morde uiva"},
+  {word:"Raposa", hint:"Vermelha astuta"},
+  {word:"Canguru", hint:"Salta Austrália"},
+  {word:"Panda", hint:"Preto branco"},
+  {word:"Tartaruga", hint:"Lenta casco"},
+  {word:"Cobra", hint:"Sem pernas"},
+  {word:"Lagarto", hint:"Rápido réptil"},
+  {word:"Pinguim", hint:"Frio ave"},
+  {word:"Coruja", hint:"Noite olhos"},
+  {word:"Águia", hint:"Voa alto"},
+  {word:"Tatu", hint:"Enterra terra"},
+  {word:"Tamanduá", hint:"Come formiga"},
+  {word:"Bicho-preguiça", hint:"Devagar árvore"},
+  {word:"Jacutinga", hint:"Ave rara"},
+  {word:"Anta", hint:"Grande forestal"},
+  {word:"Capivara", hint:"Rato gigante"},
+  {word:"Onça", hint:"Feroz selva"},
+  {word:"Gavião", hint:"Caça aves"},
+  {word:"Pavão", hint:"Colorido cauda"},
+  {word:"Flamingo", hint:"Rosa longo"},
+  {word:"Camaleão", hint:"Muda cores"},
+  {word:"Coelho", hint:"Salta fofo"},
+  {word:"Esquilo", hint:"Ágil árvores"},
+  {word:"Rato", hint:"Pequeno roedor"},
+  {word:"Morcego", hint:"Noite voa"},
+  {word:"Peixe", hint:"Nada água"},
+  {word:"Tubarao", hint:"Feroz mar"},
+  {word:"Polvo", hint:"Oito tentáculos"},
+  {word:"Caranguejo", hint:"Praia pinças"},
+  {word:"Lagosta", hint:"Mar crustáceo"},
+  {word:"Abelha", hint:"Mel voo"},
+  {word:"Formiga", hint:"Trabalhadora pequena"},
+  {word:"Borboleta", hint:"Colorida asas"},
+  
+];
+
+// =============================
+// ESTADO DO JOGO
+// =============================
+let gameState = {
+  players: [],
+  currentPlayerIndex: 0,
+  secretWord: "",
+  hint: "",
+  impostorIndex: null,
+  timer: null,
+  timeLeft: 60,
+  roundTime: 60
+};
+
+let wordRevealed = false;
+
+// =============================
+// FUNÇÕES DO JOGO
+// =============================
+function showScreen(screenId) {
+  document.querySelectorAll("#app > div").forEach(div => {
+    div.classList.add("hidden");
+    div.style.opacity = 0;
+  });
+  const el = document.getElementById(screenId);
+  el.classList.remove("hidden");
+  setTimeout(() => el.style.opacity = 1, 50);
+}
+
+function addPlayer() {
+  const name = document.getElementById("playerName").value.trim();
+  if (!name) return;
+  gameState.players.push(name);
+  const li = document.createElement("li");
+  li.textContent = name;
+  document.getElementById("playersList").appendChild(li);
+  document.getElementById("playerName").value = "";
+}
+
+function startGame() {
+  if (gameState.players.length < 3) {
+    alert("Mínimo de 3 jogadores!");
+    return;
+  }
+  const roundTimeInput = parseInt(document.getElementById("roundTime").value, 10);
+  gameState.roundTime = isNaN(roundTimeInput) ? 60 : roundTimeInput;
+  gameState.timeLeft = gameState.roundTime;
+
+  const choice = wordList[Math.floor(Math.random() * wordList.length)];
+  gameState.secretWord = choice.word;
+  gameState.hint = choice.hint;
+  gameState.impostorIndex = Math.floor(Math.random() * gameState.players.length);
+  gameState.currentPlayerIndex = 0;
+  showWord();
+}
+
+function showWord() {
+  wordRevealed = false;
+  showScreen("wordScreen");
+  const idx = gameState.currentPlayerIndex;
+  document.getElementById("currentPlayer").textContent = gameState.players[idx];
+  document.getElementById("hiddenWordSection").classList.remove("hidden");
+  document.getElementById("revealedWordSection").classList.add("hidden");
+  document.getElementById("toggleWordBtn").textContent = "Ver Palavra";
+  document.getElementById("nextPlayerBtn").classList.add("hidden");
+}
+
+function toggleWord() {
+  const idx = gameState.currentPlayerIndex;
+  wordRevealed = !wordRevealed;
+
+  const hiddenSection = document.getElementById("hiddenWordSection");
+  const revealedSection = document.getElementById("revealedWordSection");
+  const toggleBtn = document.getElementById("toggleWordBtn");
+  const nextBtn = document.getElementById("nextPlayerBtn");
+
+  if (wordRevealed) {
+    hiddenSection.classList.add("hidden");
+    revealedSection.classList.remove("hidden");
+    nextBtn.classList.remove("hidden");
+
+    if (idx === gameState.impostorIndex) {
+      document.getElementById("wordHint").textContent = "🚨 Você é o IMPOSTOR!";
+      document.getElementById("wordText").textContent = "Tente se misturar 👀";
+    } else {
+      document.getElementById("wordHint").textContent = "Dica: " + gameState.hint;
+      document.getElementById("wordText").textContent = "Palavra: " + gameState.secretWord;
+    }
+
+    toggleBtn.textContent = "Ocultar Palavra";
+  } else {
+    hiddenSection.classList.remove("hidden");
+    revealedSection.classList.add("hidden");
+    nextBtn.classList.add("hidden");
+    toggleBtn.textContent = "Ver Palavra";
+  }
+}
+
+function nextPlayer() {
+  gameState.currentPlayerIndex++;
+  if (gameState.currentPlayerIndex < gameState.players.length) {
+    showWord();
+  } else {
+    startRound();
+  }
+}
+
+function startRound() {
+  showScreen("gameScreen");
+  gameState.timeLeft = gameState.roundTime;
+  const circle = document.getElementById("circle");
+  const circumference = 440;
+  clearInterval(gameState.timer);
+  gameState.timer = setInterval(() => {
+    gameState.timeLeft--;
+    document.getElementById("timerText").textContent = gameState.timeLeft + "s";
+    const progress = (gameState.timeLeft / gameState.roundTime) * circumference;
+    circle.setAttribute("stroke-dashoffset", circumference - progress);
+    if (gameState.timeLeft <= 0) {
+      clearInterval(gameState.timer);
+      showVotingScreen();
+    }
+  }, 1000);
+}
+
+function showVotingScreen() {
+  showScreen("votingScreen");
+  const voteOptions = document.getElementById("voteOptions");
+  voteOptions.innerHTML = '';
+  gameState.players.forEach((p, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "bg-red-600 hover:bg-red-700 px-8 py-4 rounded-lg font-bold";
+    btn.textContent = `Votar em ${p}`;
+    btn.onclick = () => vote(idx);
+    voteOptions.appendChild(btn);
+  });
+}
+
+function vote(votedIndex) {
+  showScreen('resultScreen');
+  document.getElementById("revealWord").textContent = gameState.secretWord;
+  if (votedIndex === gameState.impostorIndex) {
+    document.getElementById("resultTitle").textContent = "🎉 Vitória dos Jogadores!";
+    document.getElementById("resultMessage").textContent = `${gameState.players[votedIndex]} era o impostor!`;
+  } else {
+    document.getElementById("resultTitle").textContent = "😈 Vitória do Impostor!";
+    document.getElementById("resultMessage").textContent = `Vocês votaram em ${gameState.players[votedIndex]}, mas o impostor era ${gameState.players[gameState.impostorIndex]}!`;
+  }
+}
+
+function resetGame() {
+  gameState.players = [];
+  document.getElementById("playersList").innerHTML = '';
+  showScreen("setupScreen");
+}
+</script>
+</body>
+</html>
