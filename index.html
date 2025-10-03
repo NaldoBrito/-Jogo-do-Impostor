@@ -13,11 +13,10 @@
 </head>
 <body class="flex items-center justify-center min-h-screen">
   <div id="app" class="w-full max-w-xl p-6 text-center">
-    
+
     <!-- Tela de configuração -->
     <div id="setupScreen" class="fade">
       <h1 class="text-3xl font-bold mb-6">🎭 Jogo do Impostor</h1>
-
       <input id="playerName" type="text" placeholder="Nome do jogador" 
              class="p-2 rounded text-black w-2/3 mb-4">
       <button onclick="addPlayer()" 
@@ -40,9 +39,11 @@
       
       <div id="hiddenWordSection">
         <p class="mb-4">Toque abaixo para ver sua palavra</p>
-        <button id="toggleWordBtn" onclick="toggleWord()" 
-                class="bg-yellow-500 hover:bg-yellow-600 px-6 py-3 rounded-lg">Ver Palavra</button>
       </div>
+
+      <!-- Botão separado para sempre ficar visível -->
+      <button id="toggleWordBtn" onclick="toggleWord()" 
+              class="bg-yellow-500 hover:bg-yellow-600 px-6 py-3 rounded-lg mb-4">Ver Palavra</button>
 
       <div id="revealedWordSection" class="hidden">
         <p id="wordHint" class="text-xl mb-2"></p>
@@ -84,116 +85,9 @@
   </div>
 
 <script>
-// =============================
-// LISTA DE PALAVRAS (resumida)
-// =============================
-const wordList = [
-  {word:"Manga", hint:"Amarela doce"},
-  {word:"Banana", hint:"Amarela curva"},
-  {word:"Morango", hint:"Vermelha pequena"},
-  {word:"Abacaxi", hint:"Tropical espinhoso"},
-  {word:"Uva", hint:"Cacho roxo"},
-  {word:"Pera", hint:"Verde suave"},
-  {word:"Maçã", hint:"Vermelha crocante"},
-  {word:"Melancia", hint:"Grande refrescante"},
-  {word:"Caju", hint:"Castanha fruta"},
-  {word:"Kiwi", hint:"Marrom ácido"},
-  {word:"Jabuticaba", hint:"Preta doce"},
-  {word:"Acerola", hint:"Vermelha azeda"},
-  {word:"Pitanga", hint:"Pequena ácida"},
-  {word:"Framboesa", hint:"Vermelha silvestre"},
-  {word:"Amora", hint:"Preta doce"},
-  {word:"Tangerina", hint:"Cítrica fácil"},
-  {word:"Laranja", hint:"Cítrica suco"},
-  {word:"Limão", hint:"Cítrico azedo"},
-  {word:"Carambola", hint:"Forma estrela"},
-  {word:"Mamão", hint:"Laranja sementes"},
-  {word:"Pêssego", hint:"Pele aveludada"},
-  {word:"Figo", hint:"Roxo doce"},
-  {word:"Cereja", hint:"Vermelha pequena"},
-  {word:"Graviola", hint:"Grande branca"},
-  {word:"Maracujá", hint:"Amarelo azedo"},
-  {word:"Guaraná", hint:"Semente energia"},
-  {word:"Buriti", hint:"Palmeira fruta"},
-  {word:"Sapoti", hint:"Doce marrom"},
-  {word:"Tamarindo", hint:"Doce ácido"},
-  {word:"Romã", hint:"Vermelha sementes"},
-  {word:"Melão", hint:"Amarelo fresco"},
-  {word:"Seriguela", hint:"Pequena nordeste"},
-  {word:"Cupuaçu", hint:"Doce amazônia"},
-  {word:"Jenipapo", hint:"Fruto nordeste"},
-  {word:"Pitaya", hint:"Dragão rosa"},
-  {word:"Ameixa", hint:"Roxa pequena"},
-  {word:"Jaca", hint:"Grande pegajosa"},
-  {word:"Cabeludinha", hint:"Fruta peluda"},
-  {word:"Araticum", hint:"Doce cerrado"},
-  {word:"Umbu", hint:"Nordeste verde"},
-  {word:"Pinha", hint:"Doce branca"},
-  {word:"Murici", hint:"Pequeno amarelo"},
-  {word:"Pequi", hint:"Arroz Goiás"},
-  {word:"Cambuci", hint:"Azeda paulista"},
-  {word:"Cacau", hint:"Chocolate fruta"},
-  {word:"Guabiroba", hint:"Doce cerrado"},
-  {word:"Ingá", hint:"Doce vagem"},
-  {word:"Cupu", hint:"Fruto norte"},
-  {word:"Bacaba", hint:"Amazônia vinho"},
-  {word:"Butiá", hint:"Pequeno gaúcho"},
-  {word:"Leão", hint:"Rei selva"},
-  {word:"Elefante", hint:"Grande tromba"},
-  {word:"Cavalo", hint:"Corre rápido"},
-  {word:"Tigre", hint:"Listras feroz"},
-  {word:"Jacaré", hint:"Água dentes"},
-  {word:"Girafa", hint:"Pescoço longo"},
-  {word:"Baleia", hint:"Gigante oceano"},
-  {word:"Golfinho", hint:"Inteligente mar"},
-  {word:"Cachorro", hint:"Melhor amigo"},
-  {word:"Gato", hint:"Fofinho doméstico"},
-  {word:"Papagaio", hint:"Fala cores"},
-  {word:"Arara", hint:"Tropical azul"},
-  {word:"Macaco", hint:"Ágil árvores"},
-  {word:"Urso", hint:"Grande peludo"},
-  {word:"Rinoceronte", hint:"Chifre pesado"},
-  {word:"Hipopótamo", hint:"Água pesado"},
-  {word:"Camelo", hint:"Deserto corcunda"},
-  {word:"Lobo", hint:"Morde uiva"},
-  {word:"Raposa", hint:"Vermelha astuta"},
-  {word:"Canguru", hint:"Salta Austrália"},
-  {word:"Panda", hint:"Preto branco"},
-  {word:"Tartaruga", hint:"Lenta casco"},
-  {word:"Cobra", hint:"Sem pernas"},
-  {word:"Lagarto", hint:"Rápido réptil"},
-  {word:"Pinguim", hint:"Frio ave"},
-  {word:"Coruja", hint:"Noite olhos"},
-  {word:"Águia", hint:"Voa alto"},
-  {word:"Tatu", hint:"Enterra terra"},
-  {word:"Tamanduá", hint:"Come formiga"},
-  {word:"Bicho-preguiça", hint:"Devagar árvore"},
-  {word:"Jacutinga", hint:"Ave rara"},
-  {word:"Anta", hint:"Grande forestal"},
-  {word:"Capivara", hint:"Rato gigante"},
-  {word:"Onça", hint:"Feroz selva"},
-  {word:"Gavião", hint:"Caça aves"},
-  {word:"Pavão", hint:"Colorido cauda"},
-  {word:"Flamingo", hint:"Rosa longo"},
-  {word:"Camaleão", hint:"Muda cores"},
-  {word:"Coelho", hint:"Salta fofo"},
-  {word:"Esquilo", hint:"Ágil árvores"},
-  {word:"Rato", hint:"Pequeno roedor"},
-  {word:"Morcego", hint:"Noite voa"},
-  {word:"Peixe", hint:"Nada água"},
-  {word:"Tubarao", hint:"Feroz mar"},
-  {word:"Polvo", hint:"Oito tentáculos"},
-  {word:"Caranguejo", hint:"Praia pinças"},
-  {word:"Lagosta", hint:"Mar crustáceo"},
-  {word:"Abelha", hint:"Mel voo"},
-  {word:"Formiga", hint:"Trabalhadora pequena"},
-  {word:"Borboleta", hint:"Colorida asas"},
-  
+const wordList = [ {word:"Manga", hint:"Amarela doce"}, {word:"Banana", hint:"Amarela curva"}, {word:"Morango", hint:"Vermelha pequena"}, {word:"Abacaxi", hint:"Tropical espinhoso"}, {word:"Uva", hint:"Cacho roxo"}, {word:"Pera", hint:"Verde suave"}, {word:"Maçã", hint:"Vermelha crocante"}, {word:"Melancia", hint:"Grande refrescante"}, {word:"Caju", hint:"Castanha fruta"}, {word:"Kiwi", hint:"Marrom ácido"}, {word:"Jabuticaba", hint:"Preta doce"}, {word:"Acerola", hint:"Vermelha azeda"}, {word:"Pitanga", hint:"Pequena ácida"}, {word:"Framboesa", hint:"Vermelha silvestre"}, {word:"Amora", hint:"Preta doce"}, {word:"Tangerina", hint:"Cítrica fácil"}, {word:"Laranja", hint:"Cítrica suco"}, {word:"Limão", hint:"Cítrico azedo"}, {word:"Carambola", hint:"Forma estrela"}, {word:"Mamão", hint:"Laranja sementes"}, {word:"Pêssego", hint:"Pele aveludada"}, {word:"Figo", hint:"Roxo doce"}, {word:"Cereja", hint:"Vermelha pequena"}, {word:"Graviola", hint:"Grande branca"}, {word:"Maracujá", hint:"Amarelo azedo"}, {word:"Guaraná", hint:"Semente energia"}, {word:"Buriti", hint:"Palmeira fruta"}, {word:"Sapoti", hint:"Doce marrom"}, {word:"Tamarindo", hint:"Doce ácido"}, {word:"Romã", hint:"Vermelha sementes"}, {word:"Melão", hint:"Amarelo fresco"}, {word:"Seriguela", hint:"Pequena nordeste"}, {word:"Cupuaçu", hint:"Doce amazônia"}, {word:"Jenipapo", hint:"Fruto nordeste"}, {word:"Pitaya", hint:"Dragão rosa"}, {word:"Ameixa", hint:"Roxa pequena"}, {word:"Jaca", hint:"Grande pegajosa"}, {word:"Cabeludinha", hint:"Fruta peluda"}, {word:"Araticum", hint:"Doce cerrado"}, {word:"Umbu", hint:"Nordeste verde"}, {word:"Pinha", hint:"Doce branca"}, {word:"Murici", hint:"Pequeno amarelo"}, {word:"Pequi", hint:"Arroz Goiás"}, {word:"Cambuci", hint:"Azeda paulista"}, {word:"Cacau", hint:"Chocolate fruta"}, {word:"Guabiroba", hint:"Doce cerrado"}, {word:"Ingá", hint:"Doce vagem"}, {word:"Cupu", hint:"Fruto norte"}, {word:"Bacaba", hint:"Amazônia vinho"}, {word:"Butiá", hint:"Pequeno gaúcho"}, {word:"Leão", hint:"Rei selva"}, {word:"Elefante", hint:"Grande tromba"}, {word:"Cavalo", hint:"Corre rápido"}, {word:"Tigre", hint:"Listras feroz"}, {word:"Jacaré", hint:"Água dentes"}, {word:"Girafa", hint:"Pescoço longo"}, {word:"Baleia", hint:"Gigante oceano"}, {word:"Golfinho", hint:"Inteligente mar"}, {word:"Cachorro", hint:"Melhor amigo"}, {word:"Gato", hint:"Fofinho doméstico"}, {word:"Papagaio", hint:"Fala cores"}, {word:"Arara", hint:"Tropical azul"}, {word:"Macaco", hint:"Ágil árvores"}, {word:"Urso", hint:"Grande peludo"}, {word:"Rinoceronte", hint:"Chifre pesado"}, {word:"Hipopótamo", hint:"Água pesado"}, {word:"Camelo", hint:"Deserto corcunda"}, {word:"Lobo", hint:"Morde uiva"}, {word:"Raposa", hint:"Vermelha astuta"}, {word:"Canguru", hint:"Salta Austrália"}, {word:"Panda", hint:"Preto branco"}, {word:"Tartaruga", hint:"Lenta casco"}, {word:"Cobra", hint:"Sem pernas"}, {word:"Lagarto", hint:"Rápido réptil"}, {word:"Pinguim", hint:"Frio ave"}, {word:"Coruja", hint:"Noite olhos"}, {word:"Águia", hint:"Voa alto"}, {word:"Tatu", hint:"Enterra terra"}, {word:"Tamanduá", hint:"Come formiga"}, {word:"Bicho-preguiça", hint:"Devagar árvore"}, {word:"Jacutinga", hint:"Ave rara"}, {word:"Anta", hint:"Grande forestal"}, {word:"Capivara", hint:"Rato gigante"}, {word:"Onça", hint:"Feroz selva"}, {word:"Gavião", hint:"Caça aves"}, {word:"Pavão", hint:"Colorido cauda"}, {word:"Flamingo", hint:"Rosa longo"}, {word:"Camaleão", hint:"Muda cores"}, {word:"Coelho", hint:"Salta fofo"}, {word:"Esquilo", hint:"Ágil árvores"}, {word:"Rato", hint:"Pequeno roedor"}, {word:"Morcego", hint:"Noite voa"}, {word:"Peixe", hint:"Nada água"}, {word:"Tubarao", hint:"Feroz mar"}, {word:"Polvo", hint:"Oito tentáculos"}, {word:"Caranguejo", hint:"Praia pinças"}, {word:"Lagosta", hint:"Mar crustáceo"}, {word:"Abelha", hint:"Mel voo"}, {word:"Formiga", hint:"Trabalhadora pequena"}, {word:"Borboleta", hint:"Colorida asas"}
 ];
 
-// =============================
-// ESTADO DO JOGO
-// =============================
 let gameState = {
   players: [],
   currentPlayerIndex: 0,
@@ -207,9 +101,6 @@ let gameState = {
 
 let wordRevealed = false;
 
-// =============================
-// FUNÇÕES DO JOGO
-// =============================
 function showScreen(screenId) {
   document.querySelectorAll("#app > div").forEach(div => {
     div.classList.add("hidden");
@@ -260,32 +151,33 @@ function showWord() {
 
 function toggleWord() {
   const idx = gameState.currentPlayerIndex;
-  wordRevealed = !wordRevealed;
-
   const hiddenSection = document.getElementById("hiddenWordSection");
   const revealedSection = document.getElementById("revealedWordSection");
   const toggleBtn = document.getElementById("toggleWordBtn");
   const nextBtn = document.getElementById("nextPlayerBtn");
 
-  if (wordRevealed) {
+  if (!wordRevealed) {
     hiddenSection.classList.add("hidden");
     revealedSection.classList.remove("hidden");
     nextBtn.classList.remove("hidden");
 
     if (idx === gameState.impostorIndex) {
-      document.getElementById("wordHint").textContent = "🚨 Você é o IMPOSTOR!";
+      document.getElementById("wordHint").textContent = "🚨 Você é o IMPOSTOR! Dica: " + gameState.hint;
       document.getElementById("wordText").textContent = "Tente se misturar 👀";
+      toggleBtn.textContent = "Ocultar Dica";
     } else {
       document.getElementById("wordHint").textContent = "Dica: " + gameState.hint;
       document.getElementById("wordText").textContent = "Palavra: " + gameState.secretWord;
+      toggleBtn.textContent = "Ocultar Palavra";
     }
 
-    toggleBtn.textContent = "Ocultar Palavra";
+    wordRevealed = true;
   } else {
     hiddenSection.classList.remove("hidden");
     revealedSection.classList.add("hidden");
     nextBtn.classList.add("hidden");
-    toggleBtn.textContent = "Ver Palavra";
+    toggleBtn.textContent = idx === gameState.impostorIndex ? "Ver Dica" : "Ver Palavra";
+    wordRevealed = false;
   }
 }
 
